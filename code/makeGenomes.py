@@ -5,6 +5,9 @@ import sys
 import numpy as np
 import random
 
+
+rng = np.random.default_rng()
+
 gc=0.5
 gs, ploy, theta, tdir = sys.argv[1:5]
 
@@ -32,7 +35,7 @@ mutated_ts = [msprime.sim_mutations(i, rate=theta) for i in ts]
 gts = np.zeros((chrs*gs, ploy), dtype="int8") # We only have ones and zeros. Could thus use bool array. But bool behaves different to int when used as index.
 
 
-# A list of list, one for each "chromosome"
+# A list of lists, one for each "chromosome"
 # Each chromsome list contains tuples of variant positions and genotypes
 tupListList = [[(i.site.position, i.genotypes) for i in j.variants()] for j in mutated_ts]
 
@@ -45,12 +48,19 @@ for i in range(chrs):
     for j in tupListList[i]:
         updateGts(gts, j, i)
 
+# 1D array of nucleotides:
+refArr = np.random.choice(["A","C","G","T"], chrNo*gs, replace=True, p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
 
-def pickAlleles(gc=gc):
-    return np.random.choice(["A","T","C","G"],2,replace=False,p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
+def pickAlt(ref, gc=gc):
+    a=rng.choice(["A","T","C","G"],1,replace=False,p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])[0]
+    if a == ref:
+        a = pickAlt(ref, gc=gc)
+    return a
 
-print("Genrating random alleles...", end="")
-alleles = np.vstack(pickAlleles() for _ in range(chrs*gs))
+#print("Genrating random alleles...", end="")
+#alleles = np.vstack(pickAlleles() for _ in range(chrs*gs))
+print("Genrating alt alleles...", end="")
+altDict = {i:pickAlt(refArr[i]) for i in np.where(np.sum(gts, 1)>0)}
 print("Done.")
 
 genomes = [alleles[range(chrs*gs),gts[:,i]] for i in range(ploy)]
