@@ -1,0 +1,8 @@
+#download.file("https://github.com/hannesbecher/shiny-k-mers/releases/download/v2.1.0/Tetmer_2.1.0.tar.gz", "Tetmer_2.1.0.tar.gz")
+#install.packages("Tetmer_2.1.0.tar.gz", repo=NULL)
+library(Tetmer)
+setwd("~/git_repos/CSKS/")
+sp01 <- read.spectrum("G1000000P4T0.005.hist.no0", "Test01", 21)
+str(sp01)
+sp01@data <- rbind(c(1, 0), sp01@data)
+tetmer(sp01)

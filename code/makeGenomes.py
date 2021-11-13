@@ -4,19 +4,24 @@ import msprime
 import sys
 import numpy as np
 import random
+import copy
 
-
+print("########################################\nGENOME MAKING SCRIPT")
 rng = np.random.default_rng()
 
 gc=0.5
-gs, ploy, theta, tdir = sys.argv[1:5]
+gs = int(sys.argv[1])
+ploy = int(sys.argv[2])
+theta = float(sys.argv[3])
+tdir = sys.argv[4]
 
-# tdir = "tmp/"
-print("Simulating data for haploid GS %d, ploidy %d, and theta %1.3f." % (gs, ploy, theta))
+#tdir = "/tmp/tmp.0gVEKSPNrd"
+#gs, ploy, theta = 10000, 2, 0.005
+print("Simulating data for haploid GS %d, ploidy %d, and theta %1.3f..." % (gs, ploy, theta))
 
 
 chrs=10 # number of replicate runs corresponding to "chromosomes" of equal size
-gs, ploy, theta = 10000, 2, 0.005
+
 ts = msprime.sim_ancestry(
         samples=ploy,
         ploidy=1,
@@ -24,19 +29,21 @@ ts = msprime.sim_ancestry(
         discrete_genome=True,# default setting now?
         recombination_rate=1e-4, # possibly adjust
         sequence_length=gs,
-        num_replicates=chrs,
-        model=msprime.BinaryMutationModel) 
+        num_replicates=chrs) 
 #        random_seed=123456)
 
-mutated_ts = [msprime.sim_mutations(i, rate=theta) for i in ts]
+print("Adding mutations...")
+mutated_ts = [msprime.sim_mutations(i, rate=theta, model=msprime.BinaryMutationModel()) for i in ts]
 #        random_seed=123456)
 
 # array of genotypes (concatenating all chromosomes)
-gts = np.zeros((chrs*gs, ploy), dtype="int8") # We only have ones and zeros. Could thus use bool array. But bool behaves different to int when used as index.
+print("Making a GT array...")
+gts = np.zeros((chrs*gs, ploy), dtype=int)
 
 
 # A list of lists, one for each "chromosome"
 # Each chromsome list contains tuples of variant positions and genotypes
+print("Extracting variant site information and population GT array...")
 tupListList = [[(i.site.position, i.genotypes) for i in j.variants()] for j in mutated_ts]
 
 # A function to update the genotype array with the variant information
@@ -49,7 +56,8 @@ for i in range(chrs):
         updateGts(gts, j, i)
 
 # 1D array of nucleotides:
-refArr = np.random.choice(["A","C","G","T"], chrNo*gs, replace=True, p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
+print("Making a random genome ref, length %d..." % (gs*chrs))
+refArr = np.random.choice(["A","C","G","T"], chrs*gs, replace=True, p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
 
 def pickAlt(ref, gc=gc):
     a=rng.choice(["A","T","C","G"],1,replace=False,p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])[0]
@@ -59,27 +67,27 @@ def pickAlt(ref, gc=gc):
 
 #print("Genrating random alleles...", end="")
 #alleles = np.vstack(pickAlleles() for _ in range(chrs*gs))
-print("Genrating alt alleles...", end="")
-altDict = {i:pickAlt(refArr[i]) for i in np.where(np.sum(gts, 1)>0)}
+print("Generating alt alleles...", end="")
+altDict = {i:pickAlt(refArr[i]) for i in np.where(np.sum(gts, 1)>0)[0]}
+varSites = altDict.keys()
 print("Done.")
 
-genomes = [alleles[range(chrs*gs),gts[:,i]] for i in range(ploy)]
+def makeGenome(k):
+    if k==0: return refArr
+    a = copy.deepcopy(refArr)
+    varS = np.where(gts[:,k] != 0)[0]
+    for i in varS:
+        a[i] = altDict[i]
+        
+    return a
 
-outhandle = open(tdir + "genomes.fa", "w")
-outhandle.write(">genomes\n")
-for i in genomes:
-    outhandle.write("".join(i))
+print("Making genomes...")
+genomes = [makeGenome(i) for i in range(ploy)]
 
-outhandle.close()
-
-
-# # a dictionary of variant site positions and corresponding alleles
-# alleles = {i: pickAlleles() for i in np.where(np.sum(gts, 1)>0)[0]}
-
-
-
-
-
-#len(np.where(gts[:,0] > 0)[0])
-
+print("Writing genomes to %s/genomes.fa..." % tdir)
+with open(tdir + "/genomes.fa", "w") as outhandle:
+    outhandle.write(">genomes_p%d_s%d_t%d\n" % (ploy, gs*chrs, ploy*gs*chrs))
+    for i in genomes:
+        outhandle.write("".join(i))
+print("Genome done.\n")
 
