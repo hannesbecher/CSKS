@@ -10,7 +10,7 @@ td=$(mktemp -d)
 
 
 # simulation parameters
-gs=1000000 # (haploid) genome size
+gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
 ploy=4 # ploidy level
 theta=0.005 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 #gc=0.5 #  genome GC-content (ignored for now)
