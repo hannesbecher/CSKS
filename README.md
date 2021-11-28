@@ -1,5 +1,5 @@
 # CSKS
-Coalescent simulations the generate k-mer spectra
+Coalescent simulations of k-mer spectra to test Genome Profiling tools.
 
 ## Usage
 1. Set up conda environment: `bash 00setUpEnv.sh`
