@@ -2,16 +2,18 @@
 echo "########################################"
 echo "COALESCENT SIMULATION FOR K-MER SPRECTRA"
 
+# USAGE: bash -i 01pipelineAlloTet.sh [replicate suffix]
+
 # activate conda environment (run 00setUpEnv.sh to set up)
 conda activate CSKS
 
 # make a temp dir 
 td=$(mktemp -d)
 
-
+suf=$1
 # simulation parameters
 gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
-ploy=4 # ploidy level
+ploy=22 # ploidy level
 #ploy=2 # ploidy level
 #theta=0.005 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 theta=0.01 # population-scaled mutation rate (= heterozygosity in a random-mating population)
@@ -20,9 +22,8 @@ theta=0.01 # population-scaled mutation rate (= heterozygosity in a random-matin
 
 # run msprime (this produces the genomes)
 #python code/makeGenomes.py $gs $ploy $theta $td
-python code/makeGenomesAllVars.py $gs $ploy $theta $td
-
-
+#python code/makeDivergedGenomes.py $gs 2 2 0.01 8 $td
+python code/makeDivergedGenomesRateMap.py $gs 2 2 0.002 26 $td
 # make reads from genomes
 python code/makeReads.py $td
 
@@ -35,15 +36,15 @@ echo ""
 echo "########################################"
 echo "MAKING SPECTRUM"
 # run kmc_tools to make spectrum
-kmc_tools transform  $td/db21 histogram  G$gs'P'$ploy'T'$theta.hist -cx5000
+kmc_tools transform  $td/db21 histogram  G$gs'P'$ploy'T'$theta$suf.hist -cx5000
 echo "removing zero lines"
-awk '{ if( $2 != 0 ){ print $0 } }' G$gs'P'$ploy'T'$theta.hist > G$gs'P'$ploy'T'$theta.hist.no0 && rm G$gs'P'$ploy'T'$theta.hist
+awk '{ if( ($1 < 501) || ($2 != 0 )){ print $0 } }' G$gs'P'$ploy'T'$theta$suf.hist > G$gs'P'$ploy'T'$theta$suf.hist.no0 && rm G$gs'P'$ploy'T'$theta$suf.hist
 echo "Done."
 echo ""
 
 echo "########################################"
 echo "Removing temp files..."
 rm -rf $td # comment out for debug!
-echo "Histogram written to G"$gs"P"$ploy"T"$theta".hist.no0"
+echo "Histogram written to G"$gs"P"$ploy"T"$theta$suf".hist.no0"
 echo "PIPELINE DONE."
-
+echo "########################################\n"

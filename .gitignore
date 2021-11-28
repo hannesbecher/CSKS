@@ -131,5 +131,5 @@ dmypy.json
 # km-er spectra
 *hist
 *no0
-
+*fit.txt
 .Rhistory
