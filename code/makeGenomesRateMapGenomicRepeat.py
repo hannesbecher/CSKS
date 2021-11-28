@@ -7,7 +7,7 @@ import numpy as np
 import random
 import copy
 
-print("########################################\nGENOME MAKING SCRIPT (WITH REC RATE MAP)")
+print("########################################\nGENOME MAKING SCRIPT (WITH REC RATE MAP AND REPEATS)")
 rng = np.random.default_rng()
 
 gc=0.5
@@ -67,7 +67,8 @@ print(len(varSites.keys()))
 print("Making a random genome ref, length %d..." % (gs*chrs))
 refArr = np.random.choice(["A","C","G","T"], chrs*gs, replace=True, p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
 
-elementLen = 500
+#elementLen = 500
+elementLen = 50000
 repElement = np.random.choice(["A","C","G","T"], elementLen, replace=True)
 
 elemPos = np.random.randint(0, chrs*gs - elementLen, int(chrs * gs /2 / elementLen))

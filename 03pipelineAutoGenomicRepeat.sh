@@ -13,7 +13,7 @@ suf=$1
 gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
 #ploy=4 # ploidy level
 ploy=2 # ploidy level
-theta=0.005 # population-scaled mutation rate (= heterozygosity in a random-mating population)
+theta=0.01 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 #theta=0.01 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 #gc=0.5 #  genome GC-content (ignored for now)
 #div=0.05 # genome divergence (allotetraploids only)
@@ -46,4 +46,5 @@ echo "Removing temp files..."
 rm -rf $td # comment out for debug!
 echo "Histogram written to G"$gs"P"$ploy"T"$theta$suf"GenRep.hist.no0"
 echo "PIPELINE DONE."
-echo "########################################\n"
+echo "########################################"
+echo ""
