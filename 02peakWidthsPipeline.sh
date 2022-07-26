@@ -6,8 +6,8 @@ echo "COALESCENT SIMULATION FOR K-MER SPRECTRA"
 #conda activate CSKS
 
 # make a temp dir 
-td=$(mktemp -d)
-#td=/tmp/tmp.PwXQCJ1tQi
+#td=$(mktemp -d)
+td=/tmp/tmp.PwXQCJ1tQi
 
 echo "TMP DIR $td"
 
@@ -47,6 +47,35 @@ echo "removing zero lines"
 awk '{ if( $2 != 0 ){ print $0 } }' G$gs'P2T'$theta.hist > G$gs'P2T'$theta.hist.no0 && rm G$gs'P2T'$theta.hist
 echo "Done."
 echo ""
+
+echo "########################################"
+echo "INDEXING REFERENCE"
+bwa-mem2 index $td/reference.fa
+
+echo "########################################"
+echo "MAPPING"
+bwa-mem2 mem -t 6 $td/reference.fa $td/fw.fq $td/rw.fq | samtools view -b -o $td/ref.bam
+
+echo "########################################"
+echo "SORTING BAM"
+samtools sort -o $td/refS.bam $td/ref.bam && rm $td/ref.bam
+
+echo "########################################"
+echo "MARKING DUPLICATES"
+picard MarkDuplicates I=$td/refS.bam O=$td/refSD.bam M=$td/refSD.dup-metrics.txt && rm $td/refS.bam
+
+echo "########################################"
+echo "EXTRACTING DUPLICATES"
+samtools view -f 1024 -b -o $td/refSDonly.bam $td/refSD.bam
+samtools index $td/refSDonly.bam
+samtools index $td/refSD.bam
+
+echo "########################################"
+echo "COMPUTING MAPPING DEPTHS"
+mosdepth -b 1000 $td/refSD $td/refSD.bam 
+mosdepth -b 1000 $td/refSDonly $td/refSDonly.bam 
+
+
 
 #echo "########################################"
 #echo "Removing temp files..."

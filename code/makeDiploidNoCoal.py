@@ -36,5 +36,8 @@ with open(tdir + "/genomes.fa", "w") as outhandle:
     outhandle.write(">genomes_p%d_s%d_t%d\n" % (2, gs*chrs, 2*gs*chrs))
     outhandle.write("".join(refArr))
     outhandle.write("".join(altArr))
+with open(tdir + "/reference.fa", "w") as outhandle:
+    outhandle.write(">ref\n")
+    outhandle.write("".join(refArr))
 print("Genome done.\n")
     
