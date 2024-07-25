@@ -1,6 +1,7 @@
 # Python script to make a diploid genome with a certain heterozygosity
 
-# USAGE: python makeDiploidNoCoal.py gs theta gc tdir percDel
+# USAGE: python makeDiploidNoCoal.py gs theta gc tdir propDel
+# TRY: python makeDiploidNoCoal.py 100000 0.02 0.5 abc123 0.1
 import numpy as np
 import random
 import sys
@@ -35,10 +36,15 @@ for i in hetPos:
 print("Generating deletions...")    
 # just one for a start
 dNt = [int(gs * pDel)] * chrs # number of nts in the deletion (for each chromosome)
-dStarts = [random.sample(range(gs-dNt[i])) for i in range(chrs)]
+print(dNt)
+dStarts = [random.sample(range(gs-dNt[i]), 1)[0] for i in range(chrs)]
 altArrList = [altArr]
-altArrList = [np.hstack([altArrList[i][:dStarts[i]], altArrList[i][(dStarts[i]+dNt[i]):]]) for i in range(chrs)]
-
+#altArrList = [np.hstack([
+#     altArrList[i][0:(dStarts[i])],
+#     altArrList[i][(dStarts[i]+dNt[i]):-1]
+#     ]) for i in range(chrs)]
+# for 1 chr only
+altArrList = [np.delete(altArrList[0], np.arange(dStarts[0], dStarts[0]+ dNt[0]))]
 
 
 
@@ -47,7 +53,8 @@ print("Writing genomes...")
 with open(tdir + "/genomes.fa", "w") as outhandle:
     outhandle.write(">genomes_p%d_s%d_t%d\n" % (2, gs*chrs, 2*gs*chrs))
     outhandle.write("".join(refArr))
-    outhandle.write("".join(altArr))
+    #outhandle.write("".join(altArr))
+    outhandle.write("".join(altArrList[0]))
 with open(tdir + "/reference.fa", "w") as outhandle:
     outhandle.write(">ref\n")
     outhandle.write("".join(refArr))
