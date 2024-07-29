@@ -13,7 +13,7 @@ print("Reading genomes...")
 with open(tdir + "/genomes.fa", "r") as infile:
     hd, dat = infile.readlines() # there are only two lines: header and data
 
-cov = 30 # seq coverage (per haploid genome)
+cov = 50 # seq coverage (per haploid genome)
 rlen = 150 # read length
 
 pl = int(hd[:-1].split("_")[1][1:])    # get ploidy from header line
