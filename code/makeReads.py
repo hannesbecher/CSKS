@@ -11,7 +11,7 @@ tdir = sys.argv[1]
 print("Reading genomes...")
 # the file has two lines: header and data
 with open(tdir + "/genomes.fa", "r") as infile:
-    hd, dat = infile.readlines()
+    hd, dat = infile.readlines() # there are only two lines: header and data
 
 cov = 30 # seq coverage (per haploid genome)
 rlen = 150 # read length

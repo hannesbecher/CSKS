@@ -10,11 +10,11 @@ td=$(mktemp -d)
 
 
 # simulation parameters
-gs=100000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
+gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
 # ploidy level is 2
 theta=0.02 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 gc=0.5 #  genome GC-content (ignored for now)
-pDel=0.1 # prop deleted
+pDel=0.0 # prop deleted
 
 # run genome script
 python code/makeDiploidNoCoalDel.py $gs $theta $gc $td $pDel

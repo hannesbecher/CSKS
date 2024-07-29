@@ -13,11 +13,12 @@ td=$(mktemp -d)
 gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
 ploy=2 # ploidy level
 theta=0.02 # population-scaled mutation rate (= heterozygosity in a random-mating population)
+pDel=0.1 # proportion deleted
 #gc=0.5 #  genome GC-content (ignored for now)
 #div=0.05 # genome divergence (allotetraploids only)
 
 # run msprime (this produces the genomes)
-python code/makeGenomes.py $gs $ploy $theta $td
+python code/makeGenomesDel2.py $gs $ploy $theta $td $pDel # gc is not passed ATM
 
 # make reads from genomes
 python code/makeReads.py $td

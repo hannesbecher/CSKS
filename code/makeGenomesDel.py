@@ -10,16 +10,17 @@ print("########################################\nGENOME MAKING SCRIPT")
 rng = np.random.default_rng()
 
 gc=0.5
-gs = int(sys.argv[1])   # size of one chromosome (10 are simulated)!
+gs = int(sys.argv[1])   # size of one chromosome
 ploy = int(sys.argv[2])
 theta = float(sys.argv[3])
 tdir = sys.argv[4]
+pDel = float(sys.argv[5])
 
 #tdir = "/tmp/tmp.0gVEKSPNrd"
 #gs, ploy, theta = 10000, 2, 0.005
 print("Simulating data for haploid GS %d, ploidy %d, and theta %1.3f..." % (gs, ploy, theta))
 
-
+# one chromosome only for now
 chrs=1 # number of replicate runs corresponding to "chromosomes" of equal size
 
 ts = msprime.sim_ancestry(
@@ -33,8 +34,20 @@ ts = msprime.sim_ancestry(
 #        random_seed=123456)
 
 print("Adding mutations...")
-mutated_ts = [msprime.sim_mutations(i, rate=theta, model=msprime.BinaryMutationModel()) for i in ts]
+mutated_ts = msprime.sim_mutations(i, rate=theta, model=msprime.BinaryMutationModel())
 #        random_seed=123456)
+
+
+asFasta = mutated_ts.as_fasta(reference_sequence=tskit.random_nucleotides(ts.sequence_length), wrap_width=0).split("\n")
+
+# in a diploid, the 2nd genome is at list index 3
+
+
+# make one deletion, at end of chr
+dLen = int(pDel * gs)
+
+asFasta[3] = asFasta[3][:-dLen]
+
 
 # array of genotypes (concatenating all chromosomes)
 print("Making a GT array...")

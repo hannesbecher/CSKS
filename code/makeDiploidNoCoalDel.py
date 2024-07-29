@@ -27,7 +27,8 @@ def pickAlt(ref, gc=gc):
 
 print("Make heterozygous sites...")    
 numHet = np.random.binomial(gs, theta)
-hetPos = random.sample(range(gs), numHet)
+#hetPos = random.sample(range(gs), numHet)
+hetPos = list(set(np.random.choice(range(gs), numHet, replace=True)))
 altArr = copy.deepcopy(refArr)
 for i in hetPos:
     altArr[i] = pickAlt(refArr[i])
