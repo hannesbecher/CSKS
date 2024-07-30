@@ -36,7 +36,7 @@ ts = list(msprime.sim_ancestry(
 
 print("Adding mutations...")
 # !! Here is a logical break all is made for only one chromosome from here on!!
-mutated_ts = msprime.sim_mutations(ts[0], rate=theta)
+mutated_ts = msprime.sim_mutations(ts[0], rate=theta/2)
 #        random_seed=123456)
 
 

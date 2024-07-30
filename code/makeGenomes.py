@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import random
 import copy
+import tskit
 
 print("########################################\nGENOME MAKING SCRIPT")
 rng = np.random.default_rng()
@@ -19,75 +20,36 @@ tdir = sys.argv[4]
 #gs, ploy, theta = 10000, 2, 0.005
 print("Simulating data for haploid GS %d, ploidy %d, and theta %1.3f..." % (gs, ploy, theta))
 
-
+# one chromosome only for now
 chrs=1 # number of replicate runs corresponding to "chromosomes" of equal size
 
-ts = msprime.sim_ancestry(
+ts = list(msprime.sim_ancestry(
         samples=ploy,
         ploidy=1,
         population_size=1,
         discrete_genome=True,# default setting now?
-        recombination_rate=1e-4, # possibly adjust
+        recombination_rate=1e-3, # possibly adjust
         sequence_length=gs,
-        num_replicates=chrs) 
+        num_replicates=chrs) )
 #        random_seed=123456)
 
 print("Adding mutations...")
-mutated_ts = [msprime.sim_mutations(i, rate=theta, model=msprime.BinaryMutationModel()) for i in ts]
+# !! Here is a logical break all is made for only one chromosome from here on!!
+mutated_ts = msprime.sim_mutations(ts[0], rate=theta/2)
 #        random_seed=123456)
 
-# array of genotypes (concatenating all chromosomes)
-print("Making a GT array...")
-gts = np.zeros((chrs*gs, ploy), dtype=int)
+
+asFasta = mutated_ts.as_fasta(reference_sequence=tskit.random_nucleotides(mutated_ts.sequence_length), wrap_width=0).split("\n")
+
+# in a diploid, the 2nd genome is at list index 3
 
 
-# A list of lists, one for each "chromosome"
-# Each chromsome list contains tuples of variant positions and genotypes
-print("Extracting variant site information and population GT array...")
-tupListList = [[(i.site.position, i.genotypes) for i in j.variants()] for j in mutated_ts]
+# make one deletion, at end of chr
 
-# A function to update the genotype array with the variant information
-def updateGts(gtArr, tup, chrNo):
-    gtArr[int(tup[0]) + chrNo * gs,:] = tup[1]
-
-# Update the genotype array
-for i in range(chrs):
-    for j in tupListList[i]:
-        updateGts(gts, j, i)
-
-# 1D array of nucleotides:
-print("Making a random genome ref, length %d..." % (gs*chrs))
-refArr = np.random.choice(["A","C","G","T"], chrs*gs, replace=True, p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])
-
-def pickAlt(ref, gc=gc):
-    a=rng.choice(["A","T","C","G"],1,replace=False,p=[(1-gc)/2,(1-gc)/2, (gc)/2, (gc)/2 ])[0]
-    if a == ref:
-        a = pickAlt(ref, gc=gc)
-    return a
-
-#print("Genrating random alleles...", end="")
-#alleles = np.vstack(pickAlleles() for _ in range(chrs*gs))
-print("Generating alt alleles...", end="")
-altDict = {i:pickAlt(refArr[i]) for i in np.where(np.sum(gts, 1)>0)[0]}
-varSites = altDict.keys()
-print("Done.")
-
-def makeGenome(k):
-    if k==0: return refArr
-    a = copy.deepcopy(refArr)
-    varS = np.where(gts[:,k] != 0)[0]
-    for i in varS:
-        a[i] = altDict[i]
-        
-    return a
-
-print("Making genomes...")
-genomes = [makeGenome(i) for i in range(ploy)]
 
 print("Writing genomes to %s/genomes.fa..." % tdir)
 with open(tdir + "/genomes.fa", "w") as outhandle:
     outhandle.write(">genomes_p%d_s%d_t%d\n" % (ploy, gs*chrs, ploy*gs*chrs))
-    for i in genomes:
-        outhandle.write("".join(i))
+    outhandle.write(asFasta[1] + asFasta[3] + "\n")
 print("Genome done.\n")
 
