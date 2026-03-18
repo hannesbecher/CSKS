@@ -12,7 +12,7 @@ print("Reading genomes...")
 # the file has two lines: header and data
 with open(tdir + "/genomes.fa", "r") as infile:
     hd, dat = infile.readlines() # there are only two lines: header and data
-
+dat = dat.rstrip("\n")
 cov = 50 # seq coverage (per haploid genome)
 rlen = 150 # read length
 
@@ -30,7 +30,8 @@ print("Writing reads to %s/reads.fa..." % tdir)
 with open(tdir + "/reads.fa", "w") as outfile:
     c = 0
     for i in rstarts:
-        outfile.write(">%d\n%s\n" % (c, dat[i:(i+rlen+1)]))
+        #outfile.write(">%d\n%s\n" % (c, dat[i:(i+rlen+1)]))
+        outfile.write(">%d\n%s\n" % (c, dat[i:(i+rlen)]))
         c += 1
   
 print("Reads done.\n")
