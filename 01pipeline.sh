@@ -102,6 +102,7 @@ exec > >(tee >(perl -pe 's/\r/\n/g' > "$log_file")) 2>&1
 # generate k-mer spectrum according to genome and population parameters
 echo "########################################"
 echo "COALESCENT SIMULATION FOR K-MER SPRECTRA"
+echo "Started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
 # make a temp dir
 td=$(mktemp -d "${tmp_base%/}/csks.XXXXXX")
@@ -115,11 +116,13 @@ python code/makeReads.py "$td"
 # run kmc
 echo "########################################"
 echo "KMC DB"
+echo "Started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 kmc -k"$k" -t3 -cs500000000 -fm $td/reads.fa $td/db21 $td
 echo "DB done."
 echo ""
 echo "########################################"
 echo "MAKING SPECTRUM"
+echo "Started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 # run kmc_tools to make spectrum
 kmc_tools transform  $td/db21 histogram  "$hist_file" -cx5000
 echo "removing zero lines"
@@ -132,6 +135,7 @@ echo ""
 
 echo "########################################"
 echo "Removing temp files..."
+echo "Started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 if [ "$keep_tmp" -eq 1 ]; then
     echo "Keeping temp directory at $td"
 else
@@ -140,3 +144,4 @@ fi
 echo "Histogram written to $hist_no0_file"
 echo "Log written to $log_file"
 echo "PIPELINE DONE."
+echo "At: $(date '+%Y-%m-%d %H:%M:%S %Z')"
