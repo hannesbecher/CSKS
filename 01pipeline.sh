@@ -3,7 +3,7 @@
 
 usage() {
     cat <<EOF
-Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [-k kmer_length] [-h]
+Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [-k kmer_length] [-d temp_base] [-h]
 
 Run the CSKS simulation pipeline and write a k-mer histogram.
 
@@ -12,6 +12,7 @@ Options:
   -p, --ploy     Ploidy level (default: 2)
   -t, --theta    Population-scaled mutation rate (default: 0.02)
   -k, --k        K-mer length for KMC analysis (default: 21)
+  -d, --tmpdir   Base path for the temporary directory (default: /tmp)
   -h, --help     Show this help message and exit
 EOF
 }
@@ -21,6 +22,7 @@ gs=1000000 # Size in nt of each chromosome. There are 10 chromosomes, so the ove
 ploy=2 # ploidy level
 theta=0.02 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 k=21 # k-mer length
+tmp_base=/tmp # base path for temporary directory
 #gc=0.5 #  genome GC-content (ignored for now)
 #div=0.05 # genome divergence (allotetraploids only)
 
@@ -62,6 +64,15 @@ while [ "$#" -gt 0 ]; do
             k="$2"
             shift 2
             ;;
+        -d|--tmpdir)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            tmp_base="$2"
+            shift 2
+            ;;
         -h|--help)
             usage
             exit 0
@@ -87,7 +98,7 @@ echo "########################################"
 echo "COALESCENT SIMULATION FOR K-MER SPRECTRA"
 
 # make a temp dir
-td=$(mktemp -d)
+td=$(mktemp -d "${tmp_base%/}/csks.XXXXXX")
 
 # run msprime (this produces the genomes)
 python code/makeGenomes.py "$gs" "$ploy" "$theta" "$td"
@@ -107,7 +118,7 @@ echo "MAKING SPECTRUM"
 kmc_tools transform  $td/db21 histogram  "$hist_file" -cx5000
 echo "removing zero lines"
 {
-    printf "#gs=%s,ploy=%s,theta=%s,k=%s\n" "$gs" "$ploy" "$theta" "$k"
+    printf "#gs=%E,ploy=%s,theta=%s,k=%s\n" "$gs" "$ploy" "$theta" "$k"
     awk '{ if( $2 != 0 ){ print $0 } }' "$hist_file"
 } > "$hist_no0_file" && rm "$hist_file"
 echo "Done."
