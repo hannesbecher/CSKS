@@ -78,7 +78,9 @@ hist_file="G${gs}P${ploy}T${theta}.hist"
 hist_no0_file="${hist_file}.no0"
 log_file="G${gs}P${ploy}T${theta}.log"
 
-exec > >(tee "$log_file") 2>&1
+# Keep terminal output unchanged, but normalize carriage returns in the log
+# so progress updates do not show up as long ^M-filled lines.
+exec > >(tee >(perl -pe 's/\r/\n/g' > "$log_file")) 2>&1
 
 # generate k-mer spectrum according to genome and population parameters
 echo "########################################"
