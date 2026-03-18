@@ -90,14 +90,14 @@ while [ "$#" -gt 0 ]; do
 done
 
 output_prefix="G${gs}P${ploy}T${theta}"
-log_file="${output_prefix}.withdel${pDel}.log"
+log_file="${output_prefix}.histXX.withdel${pDel}.log"
 
 # Keep terminal output unchanged, but normalize carriage returns in the log
 # so progress updates do not show up as long ^M-filled lines.
 exec > >(tee >(perl -pe 's/\r/\n/g' > "$log_file")) 2>&1
 
 echo "########################################"
-echo "COALESCENT SIMULATION FOR K-MER SPRECTRA"
+echo "COALESCENT SIMULATION FOR K-MER SPRECTRA WITH TERMINAL DELETION"
 echo "Started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
 # make a temp dir
