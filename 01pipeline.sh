@@ -3,7 +3,7 @@
 
 usage() {
     cat <<EOF
-Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [-k kmer_length] [-d temp_base] [-h]
+Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [-k kmer_length] [-d temp_base] [--keep] [-h]
 
 Run the CSKS simulation pipeline and write a k-mer histogram.
 
@@ -13,6 +13,7 @@ Options:
   -t, --theta    Population-scaled mutation rate (default: 0.02)
   -k, --k        K-mer length for KMC analysis (default: 21)
   -d, --tmpdir   Base path for the temporary directory (default: /tmp)
+  --keep         Keep the temporary directory for debugging
   -h, --help     Show this help message and exit
 EOF
 }
@@ -23,6 +24,7 @@ ploy=2 # ploidy level
 theta=0.02 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 k=21 # k-mer length
 tmp_base=/tmp # base path for temporary directory
+keep_tmp=0 # keep temporary directory for debugging
 #gc=0.5 #  genome GC-content (ignored for now)
 #div=0.05 # genome divergence (allotetraploids only)
 
@@ -72,6 +74,10 @@ while [ "$#" -gt 0 ]; do
             fi
             tmp_base="$2"
             shift 2
+            ;;
+        --keep)
+            keep_tmp=1
+            shift
             ;;
         -h|--help)
             usage
@@ -126,7 +132,11 @@ echo ""
 
 echo "########################################"
 echo "Removing temp files..."
-rm -rf "$td" # comment out for debug!
+if [ "$keep_tmp" -eq 1 ]; then
+    echo "Keeping temp directory at $td"
+else
+    rm -rf "$td"
+fi
 echo "Histogram written to $hist_no0_file"
 echo "Log written to $log_file"
 echo "PIPELINE DONE."
