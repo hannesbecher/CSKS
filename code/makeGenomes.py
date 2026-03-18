@@ -10,7 +10,7 @@ import tskit
 print("########################################\nGENOME MAKING SCRIPT")
 rng = np.random.default_rng()
 
-gc=0.5
+#gc=0.5
 gs = int(sys.argv[1])   # size of one chromosome (10 are simulated)!
 ploy = int(sys.argv[2])
 theta = float(sys.argv[3])
