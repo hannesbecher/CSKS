@@ -106,7 +106,10 @@ echo "MAKING SPECTRUM"
 # run kmc_tools to make spectrum
 kmc_tools transform  $td/db21 histogram  "$hist_file" -cx5000
 echo "removing zero lines"
-awk '{ if( $2 != 0 ){ print $0 } }' "$hist_file" > "$hist_no0_file" && rm "$hist_file"
+{
+    printf "#gs=%s,ploy=%s,theta=%s,k=%s\n" "$gs" "$ploy" "$theta" "$k"
+    awk '{ if( $2 != 0 ){ print $0 } }' "$hist_file"
+} > "$hist_no0_file" && rm "$hist_file"
 echo "Done."
 echo ""
 
