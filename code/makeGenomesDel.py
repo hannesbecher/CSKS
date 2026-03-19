@@ -51,6 +51,6 @@ dLen = int(pDel * gs)
 print("Writing genomes to %s/genomes.fa..." % tdir)
 with open(tdir + "/genomes.fa", "w") as outhandle:
     outhandle.write(">genomes_p%d_s%d_t%d\n" % (ploy, gs*chrs, ploy*gs*chrs-dLen))
-    outhandle.write(asFasta[1] + asFasta[3][:-dLen] + "\n")
+    deleted_haplotype = asFasta[3] if dLen == 0 else asFasta[3][:-dLen] # if dLen is 0, we want the full sequence, so no slicing
+    outhandle.write(asFasta[1] + deleted_haplotype + "\n")
 print("Genome done.\n")
-
