@@ -1,0 +1,44 @@
+# make sequencing reads from genomes file (generated using makeGenomes.py)
+
+# USAGE: python makeReads.py tdir
+import sys
+import numpy as np
+
+print("########################################\nREAD MAKING SCRIPT")
+
+tdir = sys.argv[1]
+cplx = float(sys.argv[2]) # complexity of seq library, proportion of bases that have reads starting
+
+print("Reading genomes...")
+# the file has two lines: header and data
+with open(tdir + "/genomes.fa", "r") as infile:
+    hd, dat = infile.readlines() # there are only two lines: header and data
+dat = dat.rstrip("\n")
+cov = 50 # seq coverage (per haploid genome)
+rlen = 150 # read length
+
+pl = int(hd[:-1].split("_")[1][1:])    # get ploidy from header line
+hgs = int(hd[:-1].split("_")[2][1:])   # get haploid genome size from header line
+tlen = int(hd[:-1].split("_")[-1][1:]) # get total genome size from header line
+
+# compute number of reads to generate
+nreads = hgs * cov * pl // rlen
+
+# sample fragemtn within range(tlen-rlen) with probability cplx, without replacement
+if cplx < 1.0:
+    libStarts = np.random.choice(range(tlen-rlen), int(cplx*tlen), replace=False)
+else:
+    libStarts = range(tlen-rlen)
+
+# sample read locations
+rstarts = np.random.choice(libStarts, nreads, replace=True)
+
+print("Writing reads to %s/reads.fa..." % tdir)
+with open(tdir + "/reads.fa", "w") as outfile:
+    c = 0
+    for i in rstarts:
+        #outfile.write(">%d\n%s\n" % (c, dat[i:(i+rlen+1)]))
+        outfile.write(">%d\n%s\n" % (c, dat[i:(i+rlen)]))
+        c += 1
+  
+print("Reads done.\n")
