@@ -212,7 +212,7 @@ fi
 python "$script_dir/code/makeReadsLowComplex.py" "$td" "$cplx" --read-length "$read_length" --depth "$depth" "${read_error_args[@]}"
 
 # run kmc, loop over k-mer lengths
-for kk in 21 24 27 30 33; do
+for kk in `seq 21 3 51`; do
     hist_file="${output_prefix}.hist${kk}"
     hist_no0_file="${output_prefix}.hist${kk}.withdel${pDel}.no0"
 
