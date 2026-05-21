@@ -1,6 +1,8 @@
 # activate conda environment (run 00setUpEnv.sh to set up)
 #conda activate CSKS
 
+script_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
 usage() {
     cat <<EOF
 Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [--pdel proportion_deleted] [--cplx library_complexity] [--read-length read_length] [--depth sequencing_depth] [--error-prob probability | --error-profile file] [-d temp_base] [--keep] [-h]
@@ -200,14 +202,14 @@ td=$(mktemp -d "${tmp_base%/}/csks.XXXXXX")
 echo "Temporary directory: $td"
 
 # run msprime (this produces the genomes)
-python code/makeGenomesDel.py "$gs" "$ploy" "$theta" "$td" "$pDel"
+python "$script_dir/code/makeGenomesDel.py" "$gs" "$ploy" "$theta" "$td" "$pDel"
 
 # make reads from genomes
 read_error_args=(--error-prob "$error_prob")
 if [ -n "$error_profile" ]; then
     read_error_args=(--error-profile "$error_profile")
 fi
-python code/makeReadsLowComplex.py "$td" "$cplx" --read-length "$read_length" --depth "$depth" "${read_error_args[@]}"
+python "$script_dir/code/makeReadsLowComplex.py" "$td" "$cplx" --read-length "$read_length" --depth "$depth" "${read_error_args[@]}"
 
 # run kmc, loop over k-mer lengths
 for kk in 21 24 27 30 33; do
