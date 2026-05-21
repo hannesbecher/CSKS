@@ -3,7 +3,7 @@
 
 usage() {
     cat <<EOF
-Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [--pdel proportion_deleted] [--cplx library_complexity] [-d temp_base] [--keep] [-h]
+Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [--pdel proportion_deleted] [--cplx library_complexity] [--read-length read_length] [--depth sequencing_depth] [--error-prob probability | --error-profile file] [-d temp_base] [--keep] [-h]
 
 Run the coalescent deletion pipeline and write k-mer histograms for multiple k values.
 
@@ -13,6 +13,11 @@ Options:
   -t, --theta    Population-scaled mutation rate (default: 0.1)
   --pdel         Proportion deleted (default: 0.01)
   --cplx         Library complexity (0.0 to 1.0, default: 1.0)
+  --read-length  Read length in nt (default: 150)
+  --depth        Sequencing coverage per haploid genome (default: 50)
+  --error-prob   Fixed per-nucleotide sequencing error probability (default: 0.0)
+  --error-profile
+                 Text file with one error probability per read position
   -d, --tmpdir   Base path for the temporary directory (default: /tmp)
   --keep         Keep the temporary directory for debugging
   -h, --help     Show this help message and exit
@@ -25,6 +30,11 @@ ploy=2 # ploidy level
 theta=0.1 # population-scaled mutation rate (= heterozygosity in a random-mating population)
 pDel=0.01 # proportion deleted
 cplx=1.0 # library complexity
+read_length=150 # read length
+depth=50 # sequencing coverage per haploid genome
+error_prob=0.0 # fixed per-nucleotide sequencing error probability
+error_profile= # file with per-position sequencing error probabilities
+error_mode=none # one of: none, fixed, profile
 tmp_base=/tmp # base path for temporary directory
 keep_tmp=0 # keep temporary directory for debugging
 
@@ -81,6 +91,74 @@ while [ "$#" -gt 0 ]; do
             fi
             shift 2
             ;;
+        --read-length|--rlen)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            read_length="$2"
+            if ! awk -v val="$read_length" 'BEGIN { if (val !~ /^[0-9]+$/ || val <= 0) exit 1 }'; then
+                echo "read length must be a positive integer" >&2
+                usage >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --depth|--coverage)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            depth="$2"
+            if ! awk -v val="$depth" 'BEGIN { if (val !~ /^[0-9]+$/ || val <= 0) exit 1 }'; then
+                echo "depth must be a positive integer" >&2
+                usage >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --error-prob)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            if [ "$error_mode" != "none" ]; then
+                echo "Use either --error-prob or --error-profile, not both" >&2
+                usage >&2
+                exit 1
+            fi
+            error_prob="$2"
+            if ! awk -v val="$error_prob" 'BEGIN { if (val < 0 || val > 1 || val !~ /^[0-9]*\.?[0-9]+$/) exit 1 }'; then
+                echo "error probability must be a float between 0.0 and 1.0" >&2
+                usage >&2
+                exit 1
+            fi
+            error_mode=fixed
+            shift 2
+            ;;
+        --error-profile)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            if [ "$error_mode" != "none" ]; then
+                echo "Use either --error-prob or --error-profile, not both" >&2
+                usage >&2
+                exit 1
+            fi
+            error_profile="$2"
+            if [ ! -f "$error_profile" ]; then
+                echo "error profile file does not exist: $error_profile" >&2
+                usage >&2
+                exit 1
+            fi
+            error_mode=profile
+            shift 2
+            ;;
         -d|--tmpdir)
             if [ -z "$2" ]; then
                 echo "Missing value for $1" >&2
@@ -125,7 +203,11 @@ echo "Temporary directory: $td"
 python code/makeGenomesDel.py "$gs" "$ploy" "$theta" "$td" "$pDel"
 
 # make reads from genomes
-python code/makeReadsLowComplex.py "$td" "$cplx"
+read_error_args=(--error-prob "$error_prob")
+if [ -n "$error_profile" ]; then
+    read_error_args=(--error-profile "$error_profile")
+fi
+python code/makeReadsLowComplex.py "$td" "$cplx" --read-length "$read_length" --depth "$depth" "${read_error_args[@]}"
 
 # run kmc, loop over k-mer lengths
 for kk in 21 24 27 30 33; do
