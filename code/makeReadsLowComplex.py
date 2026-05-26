@@ -62,6 +62,10 @@ if not 0 <= error_prob <= 1:
 import numpy as np
 
 
+def format_probability(value):
+    return "{:.6g}".format(value)
+
+
 def load_error_profile(path, expected_length):
     with open(path, "r") as infile:
         fields = infile.read().replace(",", " ").split()
@@ -105,11 +109,27 @@ def add_sequencing_errors(seq, error_probs):
 
 if error_profile:
     error_probs = load_error_profile(error_profile, rlen)
+    error_mode = "profile"
 else:
     error_probs = np.full(rlen, error_prob)
+    error_mode = "fixed"
 add_errors = error_probs.any()
 
 print("########################################\nREAD MAKING SCRIPT")
+print("Input parameters:")
+print("  Temporary directory: %s" % tdir)
+print("  Library complexity: %s" % cplx)
+print("  Read length: %d" % rlen)
+print("  Sequencing depth: %d" % cov)
+print("  Error mode: %s" % error_mode)
+if error_profile:
+    print("  Error profile: %s" % error_profile)
+    print("  Error profile positions: %d" % len(error_probs))
+    print("  Error profile min probability: %s" % format_probability(error_probs.min()))
+    print("  Error profile max probability: %s" % format_probability(error_probs.max()))
+    print("  Error profile mean probability: %s" % format_probability(error_probs.mean()))
+else:
+    print("  Error probability: %s" % format_probability(error_prob))
 
 print("Reading genomes...")
 # the file has two lines: header and data
@@ -123,12 +143,18 @@ tlen = int(hd[:-1].split("_")[-1][1:]) # get total genome size from header line
 
 # compute number of reads to generate
 nreads = hgs * cov * pl // rlen
+print("Genome parameters:")
+print("  Ploidy: %d" % pl)
+print("  Haploid genome size: %d" % hgs)
+print("  Total genome size: %d" % tlen)
+print("  Reads to generate: %d" % nreads)
 
 # sample fragemtn within range(tlen-rlen) with probability cplx, without replacement
 if cplx < 1.0:
     libStarts = np.random.choice(range(tlen-rlen), int(cplx*tlen), replace=False)
 else:
     libStarts = range(tlen-rlen)
+print("  Candidate read starts: %d" % len(libStarts))
 
 # sample read locations
 rstarts = np.random.choice(libStarts, nreads, replace=True)
