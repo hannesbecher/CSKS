@@ -1,0 +1,6 @@
+# full tool set (including read mapping and mpping depth analysis)
+micromamba create -n CSKS -c conda-forge -c bioconda msprime=1.4 kmc python=3 numpy matplotlib wgsim ipython bwa-mem2 picard mosdepth samtools
+#conda create -n CSKS -c conda-forge -c bioconda  msprime=1.4 kmc python=3 numpy matplotlib wgsim ipython bwa-mem2 picard mosdepth samtools
+
+# if read mapping is not required:
+#conda create -n CSKS_nomap -c conda-forge -c bioconda  msprime kmc python=3 numpy matplotlib wgsim ipython
