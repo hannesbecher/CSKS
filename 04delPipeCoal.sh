@@ -11,7 +11,7 @@ Options:
   -g, --gs       Chromosome size in nt (default: 10000000)
   -p, --ploy     Ploidy level (default: 2)
   -t, --theta    Population-scaled mutation rate (default: 0.1)
-  --pdel         Proportion deleted (default: 0.01)
+  --pdel         Proportion deleted (default: 0.0; nonzero values require ploidy 2)
   -d, --tmpdir   Base path for the temporary directory (default: /tmp)
   --keep         Keep the temporary directory for debugging
   -h, --help     Show this help message and exit
@@ -22,7 +22,7 @@ EOF
 gs=10000000 # Size in nt of each chromosome. There are 10 chromosomes, so the overall haploid genome size is 'gs'*10!
 ploy=2 # ploidy level
 theta=0.1 # population-scaled mutation rate (= heterozygosity in a random-mating population)
-pDel=0.01 # proportion deleted
+pDel=0.0 # proportion deleted
 tmp_base=/tmp # base path for temporary directory
 keep_tmp=0 # keep temporary directory for debugging
 
@@ -88,6 +88,18 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
+
+if ! awk -v val="$pDel" 'BEGIN { if (val < 0 || val > 1 || val !~ /^[0-9]*\.?[0-9]+$/) exit 1 }'; then
+    echo "pDel must be a float between 0.0 and 1.0" >&2
+    usage >&2
+    exit 1
+fi
+
+if [ "$ploy" -ne 2 ] && ! awk -v val="$pDel" 'BEGIN { if (val == 0) exit 0; exit 1 }'; then
+    echo "Nonzero deletions are only supported when ploidy is 2" >&2
+    usage >&2
+    exit 1
+fi
 
 output_prefix="G${gs}P${ploy}T${theta}"
 log_file="${output_prefix}.histXX.withdel${pDel}.log"
