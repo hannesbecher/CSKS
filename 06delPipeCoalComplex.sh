@@ -5,7 +5,7 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 usage() {
     cat <<EOF
-Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [--pdel proportion_deleted] [--cplx library_complexity] [--read-length read_length] [--depth sequencing_depth] [--error-prob probability | --error-profile file] [--pcr-dist none|geometric|lognormal] [--pcr-param P] [--pref output_prefix] [-d temp_base] [--keep] [-h]
+Usage: $0 [-g genome_size] [-p ploidy] [-t theta] [--pdel proportion_deleted] [--cplx library_complexity] [--read-length read_length] [--depth sequencing_depth] [--error-prob probability | --error-profile file] [--pcr-dist none|geometric|lognormal] [--pcr-param P] [--kmer-start K] [--kmer-step S] [--kmer-end K] [--pref output_prefix] [-d temp_base] [--keep] [-h]
 
 Run the coalescent deletion pipeline with an imperfect-PCR read simulation
 step and write k-mer histograms for multiple k values.
@@ -36,6 +36,12 @@ Other options:
   --error-profile
                  Text file with one error probability per read position
   --pref         Output file prefix (default: G[gs]P[ploidy]T[theta]C[cplx]PCR[dist][param])
+  --kmer-start   First k-mer length (default: 21)
+  --kmer-step    K-mer length step (default: 3)
+  --kmer-end     Last k-mer length (default: 51). Set equal to --kmer-start
+                 to generate only one k-mer length, skipping the rest --
+                 much faster if you only need a single k for downstream
+                 fitting.
   -d, --tmpdir   Base path for the temporary directory (default: /tmp)
   --keep         Keep the temporary directory for debugging
   -h, --help     Show this help message and exit
@@ -226,6 +232,48 @@ while [ "$#" -gt 0 ]; do
             output_prefix="$2"
             shift 2
             ;;
+        --kmer-start)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            kmer_start="$2"
+            if ! awk -v val="$kmer_start" 'BEGIN { if (val !~ /^[0-9]+$/ || val <= 0) exit 1 }'; then
+                echo "--kmer-start must be a positive integer" >&2
+                usage >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --kmer-step)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            kmer_step="$2"
+            if ! awk -v val="$kmer_step" 'BEGIN { if (val !~ /^[0-9]+$/ || val <= 0) exit 1 }'; then
+                echo "--kmer-step must be a positive integer" >&2
+                usage >&2
+                exit 1
+            fi
+            shift 2
+            ;;
+        --kmer-end)
+            if [ -z "$2" ]; then
+                echo "Missing value for $1" >&2
+                usage >&2
+                exit 1
+            fi
+            kmer_end="$2"
+            if ! awk -v val="$kmer_end" 'BEGIN { if (val !~ /^[0-9]+$/ || val <= 0) exit 1 }'; then
+                echo "--kmer-end must be a positive integer" >&2
+                usage >&2
+                exit 1
+            fi
+            shift 2
+            ;;
         -d|--tmpdir)
             if [ -z "$2" ]; then
                 echo "Missing value for $1" >&2
@@ -258,6 +306,11 @@ if [ "$pcr_dist" != "none" ] && [ -z "$pcr_param" ]; then
 fi
 if [ "$pcr_dist" = "none" ] && [ -n "$pcr_param" ]; then
     echo "--pcr-param must not be set when --pcr-dist is none" >&2
+    usage >&2
+    exit 1
+fi
+if [ "$kmer_start" -gt "$kmer_end" ]; then
+    echo "--kmer-start must be <= --kmer-end" >&2
     usage >&2
     exit 1
 fi
